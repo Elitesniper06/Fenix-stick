@@ -81,7 +81,6 @@ String platformName = "StickC+2";
     DISP.fillScreen(TFT_BLACK); 
     DISP.print(battery);
     DISP.print("%");
-
   }
 
   int get_battery_voltage() {
