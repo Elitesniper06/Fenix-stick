@@ -54,6 +54,8 @@ String platformName = "StickC+2";
 #define M5LED_OFF LOW
 #endif
 
+// CLOCK //
+
 #if defined(RTC)
     void clock_loop() {
         DISP.setCursor(10, 10, 1);
@@ -69,11 +71,47 @@ String platformName = "StickC+2";
 #endif
 
 
+// BATTERY //
+#if defined(PWRMGMT)
+  int old_battery = 0;
+
+  void battery_drawmenu(int battery) {
+    DISP.setTextSize(TINY_TEXT);
+    DISP.setCursor(210, 10, 1);
+    DISP.fillScreen(TFT_BLACK); 
+    DISP.print(battery);
+    DISP.print("%");
+
+  }
+
+  int get_battery_voltage() {
+    return M5.Power.getBatteryLevel();
+  }
+
+  void battery_setup() {
+    int battery = get_battery_voltage();
+    battery_drawmenu(battery);
+    delay(500);
+  }
+
+  void battery_loop() {
+    delay(300);
+    int battery = get_battery_voltage();
+
+    if (battery != old_battery){
+      battery_drawmenu(battery);
+    }
+    old_battery = battery;
+  }
+#endif
+
 void setup() {
     M5.begin();
     M5.Lcd.setRotation(1);
+    battery_setup();
 }
 
 void loop() {
     clock_loop();
+    battery_loop();
 }
