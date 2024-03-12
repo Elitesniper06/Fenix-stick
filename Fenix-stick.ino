@@ -78,9 +78,19 @@ String platformName = "StickC+2";
   void battery_drawmenu(int battery) {
     DISP.setTextSize(TINY_TEXT);
     DISP.setCursor(210, 10, 1);
-    DISP.fillScreen(TFT_BLACK); 
+    DISP.fillScreen(TFT_BLACK);
+
+    if (battery > 50) {
+        DISP.setTextColor(TFT_GREEN, TFT_BLACK);
+    } else if (battery > 25) {
+        DISP.setTextColor(TFT_YELLOW, TFT_BLACK);
+    } else {
+        DISP.setTextColor(TFT_RED, TFT_BLACK);
+    }
+
     DISP.print(battery);
     DISP.print("%");
+    DISP.setTextColor(TFT_WHITE, TFT_BLACK);
   }
 
   int get_battery_voltage() {
