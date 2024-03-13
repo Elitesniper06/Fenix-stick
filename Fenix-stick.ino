@@ -1,126 +1,99 @@
 // #define STICK_C_PLUS
 #define STICK_C_PLUS2
 
-#if defined(STICK_C_PLUS)
-#include <M5StickCPlus.h>
-// -=-=- Display -=-=-
-String platformName = "StickC+";
-#define BIG_TEXT 4
-#define MEDIUM_TEXT 3
-#define SMALL_TEXT 2
-#define TINY_TEXT 1
-// -=-=- FEATURES -=-=-
-#define M5LED 10
-#define RTC
-#define AXP
-#define ACTIVE_LOW_IR
-#define ROTATION
-#define USE_EEPROM
-// -=-=- ALIASES -=-=-
-#define DISP M5.Lcd
-#define IRLED 9
-#define SPEAKER M5.Beep
-//  #define BITMAP M5.Lcd.drawBitmap(0, 0, 320, 240, NEMOMatrix) // This doesn't work, generates static.
-#define M5LED_ON LOW
-#define M5LED_OFF HIGH
-#endif
+#include "settings.h"
 
-#if defined(STICK_C_PLUS2)
-#include <M5StickCPlus2.h>
-// -=-=- Display -=-=-
-String platformName = "StickC+2";
-#define BIG_TEXT 4
-#define MEDIUM_TEXT 3
-#define SMALL_TEXT 2
-#define TINY_TEXT 1
-// -=-=- FEATURES -=-=-
-#define ACTIVE_LOW_IR
-#define M5LED 19
-#define ROTATION
-#define USE_EEPROM
-#define RTC
-#define PWRMGMT
-#define SPEAKER M5.Speaker
-#define SONG
-// -=-=- ALIASES -=-=-
-#define DISP M5.Lcd
-#define IRLED 19
-#define M5_BUTTON_MENU 35
-#define M5_BUTTON_HOME 37
-#define M5_BUTTON_RST 39
-#define BACKLIGHT 27
-#define MINBRIGHT 190
-#define M5LED_ON HIGH
-#define M5LED_OFF LOW
-#endif
+struct MenuItem {
+  String name;
+  int command;
+};
 
-// CLOCK //
+MenuItem mmenu[] = {
+  { "TV-B-Gone", 1}, 
+  { "Bluetooth", 2},
+  { "WiFi", 3},
+  { "433 Mhz", 4},
+  { "Settings", 5},
+};
 
-#if defined(RTC)
-    void clock_loop() {
-        DISP.setCursor(10, 10, 1);
-    #if defined(STICK_C_PLUS2)
-        auto dt = StickCP2.Rtc.getDateTime();
-        DISP.printf("%02d:%02d:%02d\n", dt.time.hours, dt.time.minutes, dt.time.seconds);
-    #else
-        M5.Rtc.GetBm8563Time();
-        DISP.printf("%02d:%02d:%02d\n", M5.Rtc.Hour, M5.Rtc.Minute, M5.Rtc.Second);
-    #endif
-        delay(250);
-    }
-#endif
+const int mmenu_size = sizeof(mmenu) / sizeof(MenuItem);
+int selectedOption = 0;
 
+void drawMenu() {
+  DISP.fillScreen(TFT_BLACK);
+  DISP.setRotation(3);
 
-// BATTERY //
-#if defined(PWRMGMT)
-  int old_battery = 0;
-
-  void battery_drawmenu(int battery) {
-    DISP.setTextSize(TINY_TEXT);
-    DISP.setCursor(210, 10, 1);
-    DISP.fillScreen(TFT_BLACK);
-
-    if (battery > 50) {
-        DISP.setTextColor(TFT_GREEN, TFT_BLACK);
-    } else if (battery > 25) {
-        DISP.setTextColor(TFT_YELLOW, TFT_BLACK);
+  for (int i = 0; i < mmenu_size; i++) {
+    if (i == selectedOption) {
+      DISP.setTextSize(TINY_TEXT);
+      DISP.setTextColor(TFT_CYAN);
+      DISP.setCursor(10, 20 + i * 20, 2);
+      DISP.print("> ");
     } else {
-        DISP.setTextColor(TFT_RED, TFT_BLACK);
+      DISP.setTextColor(TFT_WHITE);
+      DISP.setCursor(10, 20 + i * 20, 2);
+      DISP.print("  ");
     }
-
-    DISP.print(battery);
-    DISP.print("%");
-    DISP.setTextColor(TFT_WHITE, TFT_BLACK);
+    DISP.print(mmenu[i].name);
   }
+}
 
-  int get_battery_voltage() {
-    return M5.Power.getBatteryLevel();
-  }
-
-  void battery_setup() {
-    int battery = get_battery_voltage();
-    battery_drawmenu(battery);
-    delay(500);
-  }
-
-  void battery_loop() {
-    delay(300);
-    int battery = get_battery_voltage();
-
-    if (battery != old_battery){
-      battery_drawmenu(battery);
+void navigateMenu() {
+  if (digitalRead(M5_BUTTON_MENU) == LOW && selectedOption > 0) {
+    selectedOption--;
+    drawMenu();
+    delay(200);
+  } else if (digitalRead(M5_BUTTON_RST) == LOW && selectedOption < mmenu_size - 1) {
+    selectedOption++;
+    drawMenu();
+    delay(200);
+  } else if (digitalRead(M5_BUTTON_HOME) == LOW) { // Verifica si se ha presionado el botón HOME
+    // Ejecutar la acción correspondiente a la opción seleccionada
+    int selectedCommand = mmenu[selectedOption].command;
+    switch (selectedCommand) {
+      case 1: // TV-B-Gone
+        // Ejecutar acción para la opción TV-B-Gone
+        Serial.println("Acción para TV-B-Gone");
+        break;
+      case 2: // Bluetooth
+        // Ejecutar acción para la opción Bluetooth
+        Serial.println("Acción para Bluetooth");
+        break;
+      case 3: // WiFi
+        // Ejecutar acción para la opción WiFi
+        Serial.println("Acción para WiFi");
+        break;
+      case 4: // 433 Mhz
+        DISP.clearDisplay();
+        DISP.setTextSize(MEDIUM_TEXT);
+        DISP.setTextColor(TFT_GREEN);
+        DISP.setCursor(0, 0);
+        DISP.println("433 Mhz");
+        DISP.setTextSize(SMALL_TEXT);
+        Serial.println("Acción para 433 Mhz");
+        
+        break;
+      case 5: // Settings
+        // Ejecutar acción para la opción Settings
+        Serial.println("Acción para Settings");
+        break;
+      default:
+        // Si no hay una acción definida para la opción seleccionada
+        Serial.println("Opción no reconocida");
+        break;
     }
-    old_battery = battery;
+    delay(200); // Retardo para evitar pulsaciones múltiples
   }
-#endif
+}
 
 void setup() {
-    M5.begin();
-    M5.Lcd.setRotation(1);
-    battery_setup();
+  M5.begin();
+  DISP.setRotation(1);
+  pinMode(PIN_433MHZ_G26, OUTPUT);
+  drawMenu();
 }
 
 void loop() {
-    clock_loop();
-    battery_loop();
+  navigateMenu();
 }
+
